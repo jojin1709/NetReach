@@ -204,7 +204,7 @@ No other environment variables are required. The app works without the Groq key 
 │  ┌──────┴────────────────┴──────────────────┐   │
 │  │              API Routes                   │   │
 │  │  /api/towers  /api/ai  /api/speed         │   │
-│  │  /api/plans   /api/coverage  /api/feedback│   │
+│  │  /api/coverage  /api/feedback              │   │
 │  └──────────────────┬───────────────────────┘   │
 │                     │                           │
 │  ┌──────────────────┴───────────────────────┐   │
@@ -224,7 +224,6 @@ No other environment variables are required. The app works without the Groq key 
 | `/api/towers` | GET | Fetch real tower data from Overpass API |
 | `/api/ai` | POST | AI advisor via Groq API (Llama 3.1) |
 | `/api/speed` | POST | Store speed test results |
-| `/api/plans` | GET | Mobile recharge, fiber, router plans |
 | `/api/coverage` | GET | Provider coverage data by location |
 | `/api/feedback` | GET/POST | Community reviews and ratings |
 | `/api/providers` | GET | Provider information and scores |
@@ -243,7 +242,7 @@ All API routes include:
 | Speed tests | Cloudflare, OVH, Tele2, ThinkBroadband | Direct HTTP download/upload |
 | AI recommendations | Groq | Llama 3.1 via Groq API |
 | Provider coverage | TRAI-mandated pages | Links to official coverage checkers |
-| Plans & pricing | Provider websites | Clearly labelled as sourced data |
+| Plans & pricing | Provider websites | Clearly labelled as sourced data (updated periodically from official sources) |
 
 ### Provider Coverage Map Links (TRAI-mandated)
 

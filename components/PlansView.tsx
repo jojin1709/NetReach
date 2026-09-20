@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, ExternalLink, Smartphone, Wifi, Router, Signal } from "lucide-react";
+import { ExternalLink, Smartphone, Wifi, Router, Signal } from "lucide-react";
 import { providers, modems, mobileRanges } from "../lib/data";
 
 type Tab = "mobile" | "fiber" | "airfiber" | "modems" | "range";
@@ -10,9 +10,7 @@ export default function PlansView() {
   const [tab, setTab] = useState<Tab>("mobile");
   const [providerFilter, setProviderFilter] = useState("all");
 
-  const allPlans = providers.flatMap(p => p.plans);
-
-  const filteredPlans = allPlans.filter(pl => {
+  const staticPlans = providers.flatMap(p => p.plans).filter(pl => {
     if (providerFilter !== "all" && pl.provider !== providerFilter) return false;
     if (tab === "mobile" && pl.type !== "mobile") return false;
     if (tab === "fiber" && pl.type !== "fiber") return false;
@@ -40,6 +38,13 @@ export default function PlansView() {
     ["range", "Mobile Range", Signal],
   ];
 
+  const providerLinks: Record<string, string> = {
+    jio: "https://www.jio.com/selfcare/plans",
+    airtel: "https://www.airtel.in/recharge-online",
+    vi: "https://www.myvi.in/recharge",
+    bsnl: "https://www.bsnl.co.in/selfcare/plans",
+  };
+
   return (
     <div>
       <div className="eyebrow">Plans</div>
@@ -53,72 +58,101 @@ export default function PlansView() {
           </button>
         ))}
       </div>
-      <div className="pills" style={{marginBottom:16}}>
+      <div className="pills" style={{marginBottom:12}}>
         {[{id:"all",name:"All"},{id:"jio",name:"Jio"},{id:"airtel",name:"Airtel"},{id:"vi",name:"Vi"},{id:"bsnl",name:"BSNL"}].map(p => (
           <button key={p.id} className={`pill${providerFilter===p.id?" active":""}`} onClick={()=>setProviderFilter(p.id)}>{p.name}</button>
         ))}
       </div>
 
-      {(tab === "mobile" || tab === "fiber" || tab === "airfiber") && (
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:12}}>
-          {filteredPlans.length === 0 && <div style={{fontSize:12,color:"#66758c",padding:16}}>No plans found for this filter.</div>}
-          {filteredPlans.map(pl => {
-            const prov = providerFor(pl.provider);
-            const isMobile = pl.type === "mobile";
-            return (
-              <div key={pl.id} className="card card-pad" style={{display:"flex",flexDirection:"column"}}>
-                <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
-                  <div className={`provider-logo p-${pl.provider}`} style={{width:32,height:32,fontSize:11}}>{prov?.logo}</div>
-                  <div style={{flex:1}}>
-                    <strong style={{fontSize:14}}>{pl.name}</strong>
-                    <div style={{fontSize:11,color:"#66758c"}}>{pl.type.replace("_"," ").toUpperCase()}</div>
-                  </div>
-                  <div style={{textAlign:"right"}}>
-                    <div style={{fontSize:22,fontWeight:850,color:"#0b74ff"}}>₹{pl.price}</div>
-                    <div style={{fontSize:10,color:"#66758c"}}>{pl.validity}</div>
-                  </div>
-                </div>
+      {tab === "mobile" && (
+        <div className="card card-pad" style={{marginBottom:16,padding:12,background:"#f0f7ff",border:"1px solid #d0e3ff",borderRadius:8}}>
+          <div style={{fontSize:12,color:"#1a5dab",lineHeight:1.6}}>
+            <strong>For latest plans and pricing,</strong> visit official provider websites:
+            <div style={{display:"flex",gap:12,marginTop:6,flexWrap:"wrap"}}>
+              {Object.entries(providerLinks).map(([id, url]) => (
+                <a key={id} href={url} target="_blank" rel="noopener noreferrer" style={{color:"#0b74ff",display:"flex",alignItems:"center",gap:4}}>
+                  {id.toUpperCase()} <ExternalLink size={10}/>
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
-                <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr 1fr":"1fr 1fr",gap:8,marginBottom:12}}>
-                  {isMobile ? (
-                    <>
-                      <div style={{background:"#f0f6ff",padding:"8px 10px",borderRadius:8}}>
-                        <div style={{fontSize:10,color:"#66758c"}}>Data</div>
-                        <strong style={{fontSize:12}}>{pl.data}</strong>
+      {tab === "mobile" && (
+        <div style={{marginBottom:16}}>
+          {staticPlans.map((pl: any, i: number) => {
+            const prov = providerFor(pl.provider);
+            return (
+              <div key={pl.id || i} className="card card-pad" style={{marginBottom:8,padding:12}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12}}>
+                  <div style={{flex:1}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+                      <div className={`provider-logo p-${pl.provider}`} style={{width:28,height:28,fontSize:10}}>{prov?.logo || "???"}</div>
+                      <div>
+                        <div style={{fontWeight:700,fontSize:14}}>₹{pl.price}</div>
+                        <div style={{fontSize:11,color:"#66758c"}}>{pl.validity}</div>
                       </div>
-                      <div style={{background:"#f0f6ff",padding:"8px 10px",borderRadius:8}}>
-                        <div style={{fontSize:10,color:"#66758c"}}>Speed</div>
-                        <strong style={{fontSize:12}}>{pl.speed}</strong>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div style={{background:"#f0f6ff",padding:"8px 10px",borderRadius:8}}>
-                        <div style={{fontSize:10,color:"#66758c"}}>Speed</div>
-                        <strong style={{fontSize:13}}>{pl.speed}</strong>
-                      </div>
-                      <div style={{background:"#f0f6ff",padding:"8px 10px",borderRadius:8}}>
-                        <div style={{fontSize:10,color:"#66758c"}}>Data</div>
-                        <strong style={{fontSize:11}}>{pl.data.length > 30 ? pl.data.slice(0,30)+"..." : pl.data}</strong>
-                      </div>
-                    </>
+                    </div>
+                    {pl.data && <div style={{fontSize:12,color:"#0b74ff",fontWeight:600,marginBottom:4}}>Data: {pl.data}</div>}
+                    <div style={{fontSize:12,color:"#46546e",lineHeight:1.5}}>{pl.description || pl.name}</div>
+                  </div>
+                  {prov?.coverageUrl && (
+                    <a href={prov.coverageUrl} target="_blank" rel="noopener noreferrer" style={{display:"flex",alignItems:"center",gap:4,fontSize:11,color:"#0b74ff",whiteSpace:"nowrap"}}>
+                      Recharge <ExternalLink size={10}/>
+                    </a>
                   )}
                 </div>
+              </div>
+            );
+          })}
+          {staticPlans.length === 0 && (
+            <div className="card card-pad" style={{textAlign:"center",padding:24}}>
+              <Smartphone size={24} color="#8292a8" style={{marginBottom:8}}/>
+              <div style={{fontSize:13,color:"#66758c"}}>No plans found for this filter.</div>
+            </div>
+          )}
+        </div>
+      )}
 
-                <div style={{fontSize:11,fontWeight:700,color:"#66758c",marginBottom:6}}>FEATURES</div>
-                <div style={{flex:1}}>
-                  {pl.features.map((f, i) => (
-                    <div key={i} style={{display:"flex",alignItems:"center",gap:6,fontSize:12,marginBottom:4}}>
-                      <Check size={12} color="#0b9a68"/> {f}
-                    </div>
-                  ))}
+      {tab === "fiber" && (
+        <div style={{marginBottom:16}}>
+          {providers.filter(p => p.technologies.includes("Fiber")).map(p => {
+            const plan = p.plans.find(pl => pl.type === "fiber");
+            const cov = providers.find(pr => pr.id === p.id);
+            return (
+              <div key={p.id} className="card card-pad" style={{marginBottom:8,padding:12}}>
+                <div style={{display:"flex",alignItems:"center",gap:10}}>
+                  <div className={`provider-logo p-${p.id}`} style={{width:32,height:32,fontSize:12}}>{p.logo}</div>
+                  <div style={{flex:1}}>
+                    <div style={{fontWeight:700,fontSize:14}}>{p.name} Fiber</div>
+                    <div style={{fontSize:12,color:"#66758c"}}>{plan?.speed || "Check website"} — from ₹{plan?.price || "?"}</div>
+                  </div>
+                  <a href={p.coverageUrl} target="_blank" rel="noopener noreferrer" style={{fontSize:11,color:"#0b74ff",display:"flex",alignItems:"center",gap:4}}>
+                    Check <ExternalLink size={10}/>
+                  </a>
                 </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
-                <div style={{borderTop:"1px solid #e1e8f1",paddingTop:10,marginTop:10,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                  <span style={{fontSize:11,color:"#66758c"}}>Valid: {pl.validity}</span>
-                  <button className="status coverage-btn" onClick={()=>window.open(prov?.website,"_blank","noopener,noreferrer")}>
-                    Recharge <ExternalLink size={10}/>
-                  </button>
+      {tab === "airfiber" && (
+        <div style={{marginBottom:16}}>
+          {providers.filter(p => p.technologies.includes("AirFiber")).map(p => {
+            const plan = p.plans.find(pl => pl.type === "airfiber");
+            return (
+              <div key={p.id} className="card card-pad" style={{marginBottom:8,padding:12}}>
+                <div style={{display:"flex",alignItems:"center",gap:10}}>
+                  <div className={`provider-logo p-${p.id}`} style={{width:32,height:32,fontSize:12}}>{p.logo}</div>
+                  <div style={{flex:1}}>
+                    <div style={{fontWeight:700,fontSize:14}}>{p.name} AirFiber</div>
+                    <div style={{fontSize:12,color:"#66758c"}}>{plan?.speed || "Check website"} — from ₹{plan?.price || "?"}</div>
+                  </div>
+                  <a href={p.coverageUrl} target="_blank" rel="noopener noreferrer" style={{fontSize:11,color:"#0b74ff",display:"flex",alignItems:"center",gap:4}}>
+                    Check <ExternalLink size={10}/>
+                  </a>
                 </div>
               </div>
             );
@@ -127,118 +161,43 @@ export default function PlansView() {
       )}
 
       {tab === "modems" && (
-        <div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:12}}>
-            {filteredModems.length === 0 && <div style={{fontSize:12,color:"#66758c",padding:16}}>No modems found for this filter.</div>}
-            {filteredModems.map(m => {
-              const prov = providerFor(m.provider);
-              return (
-                <div key={m.id} className="card card-pad" style={{display:"flex",flexDirection:"column"}}>
-                  <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
-                    <div className={`provider-logo p-${m.provider}`} style={{width:32,height:32,fontSize:11}}>{prov?.logo}</div>
-                    <div style={{flex:1}}>
-                      <strong style={{fontSize:14}}>{m.name}</strong>
-                      <div style={{fontSize:11,color:"#66758c"}}>{m.type.toUpperCase()} · {m.wifi}</div>
-                    </div>
-                    <div style={{textAlign:"right"}}>
-                      <div style={{fontSize:22,fontWeight:850,color:m.price===0?"#0b9a68":"#0b74ff"}}>
-                        {m.price===0 ? "Free" : `₹${m.price}`}
-                      </div>
-                      <div style={{fontSize:10,color:"#66758c"}}>{m.price===0?"With plan":"One-time"}</div>
-                    </div>
-                  </div>
-
-                  <div style={{background:"#f0f6ff",padding:"8px 10px",borderRadius:8,marginBottom:12}}>
-                    <div style={{fontSize:10,color:"#66758c"}}>Max Speed</div>
-                    <strong style={{fontSize:13}}>{m.speed}</strong>
-                  </div>
-
-                  <div style={{fontSize:11,fontWeight:700,color:"#66758c",marginBottom:6}}>FEATURES</div>
-                  <div style={{flex:1}}>
-                    {m.features.map((f, i) => (
-                      <div key={i} style={{display:"flex",alignItems:"center",gap:6,fontSize:12,marginBottom:4}}>
-                        <Check size={12} color="#0b9a68"/> {f}
-                      </div>
-                    ))}
-                  </div>
-
-                  <div style={{borderTop:"1px solid #e1e8f1",paddingTop:10,marginTop:10}}>
-                    <button className="status coverage-btn" onClick={()=>window.open(prov?.website,"_blank","noopener,noreferrer")} style={{width:"100%",justifyContent:"center"}}>
-                      Check availability <ExternalLink size={10}/>
-                    </button>
-                  </div>
+        <div style={{marginBottom:16}}>
+          {filteredModems.map((m, i) => (
+            <div key={i} className="card card-pad" style={{marginBottom:8,padding:12}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12}}>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:700,fontSize:14}}>{m.name}</div>
+                  <div style={{fontSize:12,color:"#66758c",marginBottom:4}}>{m.type} — {m.speed}</div>
+                  <div style={{fontSize:12,color:"#46546e"}}>{m.features?.join(", ")}</div>
                 </div>
-              );
-            })}
-          </div>
-          <div style={{marginTop:12,fontSize:11,color:"#66758c",textAlign:"center"}}>
-            Most providers offer free routers with fiber plans. Standalone routers available for purchase.
-          </div>
+                <div style={{textAlign:"right",whiteSpace:"nowrap"}}>
+                  <div style={{fontWeight:700,fontSize:14,color:"#0b74ff"}}>{m.price === 0 ? "Free" : `₹${m.price}`}</div>
+                  <div style={{fontSize:11,color:"#66758c"}}>{m.provider.toUpperCase()}</div>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
       {tab === "range" && (
-        <div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(340px,1fr))",gap:12}}>
-            {filteredRanges.length === 0 && <div style={{fontSize:12,color:"#66758c",padding:16}}>No range data found.</div>}
-            {filteredRanges.map((r, i) => {
-              const prov = providerFor(r.provider);
-              return (
-                <div key={i} className="card card-pad">
-                  <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
-                    <div className={`provider-logo p-${r.provider}`} style={{width:32,height:32,fontSize:11}}>{prov?.logo}</div>
-                    <div style={{flex:1}}>
-                      <strong style={{fontSize:14}}>{prov?.name} — {r.generation}</strong>
-                      <div style={{fontSize:11,color:"#66758c"}}>Frequency: {r.frequency}</div>
-                    </div>
-                  </div>
-
-                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12}}>
-                    <div style={{background:"#f5f8fc",padding:"8px 10px",borderRadius:8,textAlign:"center"}}>
-                      <div style={{fontSize:10,color:"#66758c"}}>Range</div>
-                      <strong style={{fontSize:16,color:"#0b74ff"}}>{r.rangeKm}</strong>
-                      <div style={{fontSize:10,color:"#66758c"}}>km</div>
-                    </div>
-                    <div style={{background:"#f5f8fc",padding:"8px 10px",borderRadius:8,textAlign:"center"}}>
-                      <div style={{fontSize:10,color:"#66758c"}}>Speed</div>
-                      <strong style={{fontSize:11,color:"#0b9a68"}}>{r.speed.split("-")[0]}</strong>
-                      <div style={{fontSize:10,color:"#66758c"}}>Mbps</div>
-                    </div>
-                    <div style={{background:"#f5f8fc",padding:"8px 10px",borderRadius:8,textAlign:"center"}}>
-                      <div style={{fontSize:10,color:"#66758c"}}>Coverage</div>
-                      <strong style={{fontSize:16,color:r.coveragePercent>=90?"#0b9a68":r.coveragePercent>=70?"#f5a623":"#e55f5f"}}>{r.coveragePercent}%</strong>
-                      <div style={{fontSize:10,color:"#66758c"}}>India</div>
-                    </div>
-                  </div>
-
-                  <div style={{marginBottom:8}}>
-                    <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:4}}>
-                      <span>Indoor penetration</span>
-                      <strong>{r.indoorPenetration}</strong>
-                    </div>
-                    <div style={{width:"100%",height:6,background:"#e1e8f1",borderRadius:999,overflow:"hidden"}}>
-                      <div style={{width:`${r.coveragePercent}%`,height:"100%",background:r.coveragePercent>=90?"#0b9a68":r.coveragePercent>=70?"#f5a623":"#e55f5f",borderRadius:999}}/>
-                    </div>
-                  </div>
-
-                  <div style={{fontSize:10,color:"#66758c"}}>
-                    {r.generation === "5G NR" ? "Higher speed but shorter range. Requires line-of-sight for best performance." :
-                     r.generation === "4G LTE" ? "Good balance of speed and coverage. Works well indoors and outdoors." :
-                     "Widest coverage but slower speeds. Best for voice and basic data."}
-                  </div>
+        <div style={{marginBottom:16}}>
+          {filteredRanges.map((r, i) => (
+            <div key={i} className="card card-pad" style={{marginBottom:8,padding:12}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:12}}>
+                <div>
+                  <div style={{fontWeight:700,fontSize:14}}>{r.provider.toUpperCase()} {r.generation}</div>
+                  <div style={{fontSize:12,color:"#66758c"}}>Frequency: {r.frequency} MHz — Range: {r.rangeKm} km</div>
                 </div>
-              );
-            })}
-          </div>
-          <div style={{marginTop:12,fontSize:11,color:"#66758c",textAlign:"center"}}>
-            Signal range varies by terrain, building materials, and weather. Actual speeds may differ from advertised speeds.
-          </div>
+                <div style={{textAlign:"right"}}>
+                  <div style={{fontWeight:700,fontSize:14,color:"#0b74ff"}}>{r.coveragePercent}%</div>
+                  <div style={{fontSize:11,color:"#66758c"}}>coverage</div>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
-
-      <div style={{marginTop:16,fontSize:11,color:"#66758c",textAlign:"center"}}>
-        Prices are indicative and may vary by region. Visit the provider website for the latest offers.
-      </div>
     </div>
   );
 }

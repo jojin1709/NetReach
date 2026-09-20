@@ -100,66 +100,21 @@ export default function NetReachApp() {
 
     const fetchTowers = async () => {
       try {
-        const allTowers: Tower[] = [];
-        let towerId = 0;
-        const pad = 0.03;
-        const south = location.lat - pad;
-        const north = location.lat + pad;
-        const west = location.lng - pad;
-        const east = location.lng + pad;
-
-        const overpassQuery = `
-          [out:json][timeout:20];
-          (
-            node["telecom"="tower"](${south},${west},${north},${east});
-            node["man_made"="communications_tower"](${south},${west},${north},${east});
-            node["man_made"="tower"]["communication"~"mobile_phone|cellular|gsm|lte"](${south},${west},${north},${east});
-          );
-          out body;
-        `;
-
-        let res: Response | null = null;
-        const endpoints = ["https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter"];
-        for (const ep of endpoints) {
-          try {
-            res = await fetch(ep, {
-              method: "POST",
-              body: `data=${encodeURIComponent(overpassQuery)}`,
-              signal: controller.signal,
-              headers: { "Content-Type": "application/x-www-form-urlencoded" }
-            });
-            if (res.ok) break;
-          } catch { continue; }
-        }
-
-        if (res && res.ok) {
-          const data = await res.json();
-          if (data.elements) {
-            data.elements.forEach((el: any) => {
-              const tags = el.tags || {};
-              const operator = (tags.operator || tags["operator:mobile"] || tags["network"] || "").toLowerCase();
-              const name = (tags.name || "").toLowerCase();
-              let providerId = "local";
-
-              if (operator.includes("airtel") || name.includes("airtel")) providerId = "airtel";
-              else if (operator.includes("jio") || operator.includes("reliance") || operator.includes("rjio") || name.includes("jio") || name.includes("reliance")) providerId = "jio";
-              else if (operator.includes("vodafone") || operator.includes("vi") || operator.includes("idea") || name.includes("vodafone") || name.includes("vi")) providerId = "vi";
-              else if (operator.includes("bsnl") || operator.includes("bsnlnl") || name.includes("bsnl")) providerId = "bsnl";
-
-              const radio = (tags["communication:technology"] || tags["tech"] || tags["radio"] || tags["communication"] || "").toLowerCase();
-              let tech = "4G";
-              if (radio.includes("5g") || radio.includes("nr")) tech = "5G NR";
-              else if (radio.includes("4g") || radio.includes("lte")) tech = "4G LTE";
-              else if (radio.includes("3g") || radio.includes("umts") || radio.includes("wcdma")) tech = "3G";
-              else if (radio.includes("2g") || radio.includes("gsm") || radio.includes("cdma")) tech = "2G";
-
-              allTowers.push({ id: `tower-${towerId++}`, provider: providerId, type: "mobile", tech, lat: el.lat, lng: el.lon, radius: tech.includes("5G") ? 1500 : tech.includes("4G") ? 2500 : tech.includes("3G") ? 3500 : 4000 });
-            });
-          }
-        }
+        const res = await fetch(`/api/towers?lat=${location.lat}&lng=${location.lng}`, { signal: controller.signal });
+        if (!res.ok) throw new Error("API error");
+        const data = await res.json();
+        const towers: Tower[] = (data.towers || []).map((t: any) => ({
+          id: t.id,
+          provider: t.provider,
+          type: "mobile",
+          tech: t.tech || "4G",
+          lat: t.lat,
+          lng: t.lng,
+          radius: t.tech?.includes("5G") ? 1500 : t.tech?.includes("3G") ? 3500 : 2500
+        }));
         if (!controller.signal.aborted) {
-          setTowers(allTowers);
-          if (allTowers.length === 0) setTowersError("No cell towers found in OpenStreetMap data for this area.");
+          setTowers(towers);
+          if (towers.length === 0) setTowersError("No cell towers found in this area.");
         }
       } catch (e: any) {
         if (!controller.signal.aborted && e.name !== "AbortError") setTowersError("Could not fetch tower data.");
