@@ -1,0 +1,18 @@
+{
+  "name": "NetReach — Indian Connectivity Checker",
+  "short_name": "NetReach",
+  "description": "Find the best internet options at your location in India. Compare providers, check coverage, run speed tests.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f8fc",
+  "theme_color": "#0b74ff",
+  "orientation": "any",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ],
+  "categories": ["utilities", "productivity"],
+  "lang": "en",
+  "dir": "ltr",
+  "scope": "/",
+  "prefer_related_applications": false
+}
